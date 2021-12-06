@@ -1,0 +1,40 @@
+version: "3"
+
+networks:
+  readingisgood-net:
+
+services:
+  # Database Service (Postgres)
+  postgre:
+    image: postgres:latest
+    container_name: postgresql-container
+     #volumes:
+     # - postgres-data:/var/lib/postgresql/data
+    networks:
+      - readingisgood-net
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: getir
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./schema-postgresql.sql:/docker-entrypoint-initdb.d/schema-postgresql.sql
+
+  # Reading is good Service
+  reading-is-good:
+    image: enesterzioglu/readingisgood:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    networks:
+      - readingisgood-net
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgre/getir
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+    depends_on:
+      - postgre
